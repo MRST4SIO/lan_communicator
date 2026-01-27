@@ -1,0 +1,17 @@
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+.env
+
+# IDE specific
+.vscode/
+.idea/
+
+# Config files (Optional: uncomment if you don't want to share your private IPs)
+# config.json
+.gemini
