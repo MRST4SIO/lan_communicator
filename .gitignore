@@ -13,5 +13,6 @@ env/
 .idea/
 
 # Config files (Optional: uncomment if you don't want to share your private IPs)
-# config.json
 .gemini
+secret.key
+config.json

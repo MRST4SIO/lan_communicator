@@ -1,13 +1,13 @@
-# CLI LAN Communicator 💬
+# Secure LAN Communicator 🔒
 
-A simple, robust command-line interface (CLI) messenger application written in pure Python. It allows two computers on the same Local Area Network (LAN) to exchange messages in real-time using TCP sockets and multi-threading.
+A secure, encrypted command-line interface (CLI) messenger application written in Python. It allows two computers on the same Local Area Network (LAN) to exchange messages in real-time using TCP sockets, with end-to-end encryption provided by `PyNaCl` (libsodium).
 
 ## 🚀 Features
 
+*   **End-to-End Encryption:** Messages are encrypted using **XSalsa20-Poly1305** (via `PyNaCl`), ensuring confidentiality and integrity.
 *   **Real-time Communication:** Uses separate threads for sending and receiving messages simultaneously.
 *   **Robust Connection Handling:** Automatically attempts to reconnect if the target machine is unreachable.
-*   **Zero Dependencies:** Built using only Python's standard libraries (`socket`, `threading`, `json`).
-*   **JSON Configuration:** Easy-to-edit configuration file for network setup.
+*   **Secure Configuration:** Keys and IPs are stored in a local JSON file (ignored by git).
 *   **Clean Interface:** Simple terminal-based UI.
 
 ## 🛠️ Prerequisites
@@ -15,57 +15,87 @@ A simple, robust command-line interface (CLI) messenger application written in p
 *   Python 3.6 or higher
 *   Two computers connected to the same local network (Wi-Fi or Ethernet)
 
+## 📦 Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/your-username/lan-communicator.git
+    cd lan-communicator
+    ```
+
+2.  Create and activate a virtual environment (recommended):
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # Linux/Mac
+    # or
+    venv\Scripts\activate     # Windows
+    ```
+
+3.  Install the required dependencies:
+    ```bash
+    pip install pynacl
+    ```
+
 ## ⚙️ Configuration
 
-Before running the application, you need to configure the IP addresses in `config.json`.
+Before running the application, you need to set up the configuration and encryption keys.
 
-1.  **Check your IP Address:**
-    *   Windows: `ipconfig` (look for IPv4 Address)
-    *   Linux/Mac: `ip a` or `ifconfig`
+### 1. Generate a Secret Key
+Since this communicator uses symmetric encryption, **both devices must share the exact same key**.
 
-2.  **Edit `config.json`:**
+Run the helper script to generate a new key:
+```bash
+python gen_key.py
+```
+The key will be printed to the terminal and saved in a file named `secret.key`. Copy this Base64 string.
+
+### 2. Create `config.json`
+Copy the example configuration file:
+```bash
+cp config.json.example config.json
+```
+
+Edit `config.json` on **BOTH** computers:
 
 **On Computer A:**
 ```json
 {
-    "my_ip": "192.168.1.53",      <-- IP of Computer A
-    "target_ip": "192.168.1.44",  <-- IP of Computer B
-    "port": 5005
+    "my_ip": "192.168.1.53",
+    "target_ip": "192.168.1.44",
+    "port": 5005,
+    "secret_key": "PASTE_THE_KEY_FROM_SECRET_KEY_FILE"
 }
 ```
 
 **On Computer B:**
 ```json
 {
-    "my_ip": "192.168.1.44",      <-- IP of Computer B
-    "target_ip": "192.168.1.53",  <-- IP of Computer A
-    "port": 5005
+    "my_ip": "192.168.1.44",
+    "target_ip": "192.168.1.53",
+    "port": 5005,
+    "secret_key": "PASTE_THE_SAME_KEY_HERE"
 }
 ```
 
-> **Note:** The `port` must be the same on both machines.
+> **Note:** The `secret_key` and `port` must be identical on both machines.
 
 ## ▶️ How to Run
 
-1.  Clone the repository or download the files.
-2.  Navigate to the project directory.
-3.  Run the script:
+1.  Ensure your virtual environment is active.
+2.  Run the main script:
 
 ```bash
-python main.py
+python secure_main.py
 ```
 
-4.  Wait for the connection. Once both clients are running, you can start typing messages!
-5.  Type `exit` to close the connection and quit the program.
+3.  Wait for the connection. Once both clients are running and the keys match, you can start typing messages!
+4.  Type `exit` to close the connection and quit the program.
 
-## 🧠 How it Works
+## 🧠 Encryption Details
 
-The application uses a **Peer-to-Peer (P2P)** architecture simulated with a client-server model:
-
-*   **Receiver Thread:** Acts as a server. It binds to `my_ip` and listens for incoming connections. When data arrives, it prints it to the console.
-*   **Sender Thread:** Acts as a client. It constantly tries to connect to `target_ip`. Once connected, it waits for user input and sends messages.
-
-This split architecture allows you to type and receive messages at the same time without blocking the program.
+This application uses the `PyNaCl` library (Python binding to `libsodium`).
+*   **Algorithm:** XSalsa20 stream cipher for encryption + Poly1305 MAC for authentication.
+*   **Security:** This ensures that messages cannot be read by third parties (confidentiality) and cannot be modified in transit without detection (integrity).
 
 ## 📜 License
 
