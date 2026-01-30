@@ -1,19 +1,18 @@
-# Secure LAN Communicator 🔒
+# Secure LAN Communicator (P2P) 🔒
 
-A secure, encrypted command-line interface (CLI) messenger application written in Python. It allows two computers on the same Local Area Network (LAN) to exchange messages in real-time using TCP sockets, with end-to-end encryption provided by `PyNaCl` (libsodium).
+A secure, encrypted CLI messenger for local networks. This version features automated key exchange using the **Diffie-Hellman** protocol (X25519), eliminating the need for manual key management.
 
 ## 🚀 Features
 
-*   **End-to-End Encryption:** Messages are encrypted using **XSalsa20-Poly1305** (via `PyNaCl`), ensuring confidentiality and integrity.
-*   **Real-time Communication:** Uses separate threads for sending and receiving messages simultaneously.
-*   **Robust Connection Handling:** Automatically attempts to reconnect if the target machine is unreachable.
-*   **Secure Configuration:** Keys and IPs are stored in a local JSON file (ignored by git).
-*   **Clean Interface:** Simple terminal-based UI.
+*   **Perfect Forward Secrecy:** Uses Ephemeral Diffie-Hellman keys. Every session generates a unique encryption key that is never stored.
+*   **End-to-End Encryption (E2EE):** All messages are encrypted using **XSalsa20-Poly1305** (via `PyNaCl`).
+*   **Zero Configuration Security:** No need to copy secret keys between devices. Just set the IPs and talk.
+*   **Real-time Full-Duplex:** Concurrent sending and receiving using Python threads.
 
 ## 🛠️ Prerequisites
 
-*   Python 3.6 or higher
-*   Two computers connected to the same local network (Wi-Fi or Ethernet)
+*   Python 3.6+
+*   Two devices on the same LAN (or connected via VPN like WireGuard/Tailscale).
 
 ## 📦 Installation
 
@@ -23,47 +22,24 @@ A secure, encrypted command-line interface (CLI) messenger application written i
     cd lan-communicator
     ```
 
-2.  Create and activate a virtual environment (recommended):
+2.  Install dependencies:
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # Linux/Mac
-    # or
-    venv\Scripts\activate     # Windows
-    ```
-
-3.  Install the required dependencies:
-    ```bash
-    pip install pynacl
+    pip install -r requirements.txt
     ```
 
 ## ⚙️ Configuration
 
-Before running the application, you need to set up the configuration and encryption keys.
-
-### 1. Generate a Secret Key
-Since this communicator uses symmetric encryption, **both devices must share the exact same key**.
-
-Run the helper script to generate a new key:
-```bash
-python gen_key.py
-```
-The key will be printed to the terminal and saved in a file named `secret.key`. Copy this Base64 string.
-
-### 2. Create `config.json`
-Copy the example configuration file:
+Copy the example config and edit it on both machines:
 ```bash
 cp config.json.example config.json
 ```
-
-Edit `config.json` on **BOTH** computers:
 
 **On Computer A:**
 ```json
 {
     "my_ip": "192.168.1.53",
     "target_ip": "192.168.1.44",
-    "port": 5005,
-    "secret_key": "PASTE_THE_KEY_FROM_SECRET_KEY_FILE"
+    "port": 5005
 }
 ```
 
@@ -72,31 +48,27 @@ Edit `config.json` on **BOTH** computers:
 {
     "my_ip": "192.168.1.44",
     "target_ip": "192.168.1.53",
-    "port": 5005,
-    "secret_key": "PASTE_THE_SAME_KEY_HERE"
+    "port": 5005
 }
 ```
 
-> **Note:** The `secret_key` and `port` must be identical on both machines.
+## ▶️ Running
 
-## ▶️ How to Run
-
-1.  Ensure your virtual environment is active.
-2.  Run the main script:
+Simply run the secure script on both machines:
 
 ```bash
 python secure_main.py
 ```
 
-3.  Wait for the connection. Once both clients are running and the keys match, you can start typing messages!
-4.  Type `exit` to close the connection and quit the program.
+The application will automatically perform a handshake, exchange public keys, and establish a secure tunnel. Once you see `[System] Szyfrowanie ustalone`, you are ready to chat.
 
-## 🧠 Encryption Details
+## 📜 How it works (Cryptography)
 
-This application uses the `PyNaCl` library (Python binding to `libsodium`).
-*   **Algorithm:** XSalsa20 stream cipher for encryption + Poly1305 MAC for authentication.
-*   **Security:** This ensures that messages cannot be read by third parties (confidentiality) and cannot be modified in transit without detection (integrity).
+1.  **Identity:** At startup, each instance generates a temporary X25519 Private/Public key pair.
+2.  **Handshake:** Upon TCP connection, devices exchange their Public Keys.
+3.  **Key Derivation:** Using the Diffie-Hellman algorithm, both sides compute the same **Shared Secret** without ever sending it over the wire.
+4.  **Encryption:** Messages are encrypted using this secret. If the program is restarted, new keys are generated, ensuring that even if one session is compromised, others remain secure.
 
 ## 📜 License
 
-This project is open-source and available for educational purposes.
+MIT / Educational Purpose
